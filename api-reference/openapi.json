@@ -14,10 +14,8 @@
   "paths": {
     "/telegram/webhook": {
       "post": {
-        "tags": [
-          "Telegram"
-        ],
-        "summary": "Create webhook",
+        "tags": ["Telegram"],
+        "summary": "Connect telegram webhook (Backend only)",
         "responses": {
           "200": {
             "description": "Successful response",
@@ -64,10 +62,8 @@
     },
     "/auth/login": {
       "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Create login",
+        "tags": ["Authentication"],
+        "summary": "Login",
         "responses": {
           "200": {
             "description": "Successful response",
@@ -78,9 +74,6 @@
                   "properties": {
                     "token": {
                       "type": "string"
-                    },
-                    "user": {
-                      "$ref": "#/components/schemas/User"
                     }
                   }
                 }
@@ -113,7 +106,15 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -122,9 +123,7 @@
     },
     "/weight": {
       "post": {
-        "tags": [
-          "Weight Sensors"
-        ],
+        "tags": ["Weight Sensors"],
         "summary": "Create weight",
         "responses": {
           "200": {
@@ -187,9 +186,7 @@
     },
     "/temperature": {
       "post": {
-        "tags": [
-          "Temperature Sensors"
-        ],
+        "tags": ["Temperature Sensors"],
         "summary": "Create temperature",
         "responses": {
           "200": {
@@ -197,7 +194,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TemperatureReading"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -252,10 +254,8 @@
     },
     "/metrics/overview": {
       "get": {
-        "tags": [
-          "Metrics"
-        ],
-        "summary": "List overview",
+        "tags": ["Metrics"],
+        "summary": "Get overview",
         "responses": {
           "200": {
             "description": "Successful response",
@@ -264,10 +264,11 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": {
-                      "type": "object"
+                    "latestWeight": {
+                      "type": "string",
+                      "format": "date-time"
                     },
-                    "timestamp": {
+                    "latestTemp": {
                       "type": "string",
                       "format": "date-time"
                     }
@@ -316,10 +317,8 @@
     },
     "/metrics/list": {
       "get": {
-        "tags": [
-          "Metrics"
-        ],
-        "summary": "List list",
+        "tags": ["Metrics"],
+        "summary": "List metrics",
         "responses": {
           "200": {
             "description": "Successful response",
@@ -328,14 +327,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "data": {
-                      "type": "object"
+                    "weights": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/WeightReading" }
                     },
-                    "timestamp": {
-                      "type": "string",
-                      "format": "date-time"
+                    "temps": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TemperatureReading"
+                      }
                     }
-                  }
+                  },
+                  "required": ["weights", "temps"]
                 }
               }
             }
@@ -380,17 +383,20 @@
     },
     "/user/register": {
       "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Create register",
+        "tags": ["Users"],
+        "summary": "Register user",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -436,7 +442,19 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fullName": { "type": "string", "minLength": 1 },
+                  "email": { "type": "string", "format": "email" },
+                  "phone": { "type": "string" }
+                },
+                "required": ["fullName", "email", "phone"]
+              },
+              "example": {
+                "fullName": "Jane Doe",
+                "email": "jane@example.com",
+                "phone": "+1-202-555-0147"
               }
             }
           }
@@ -445,10 +463,8 @@
     },
     "/user": {
       "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List user",
+        "tags": ["Users"],
+        "summary": "Get user",
         "responses": {
           "200": {
             "description": "Successful response",
@@ -503,17 +519,26 @@
     },
     "/user/profile": {
       "put": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Update profile",
+        "tags": ["Users"],
+        "summary": "Update user profile",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
                 }
               }
             }
@@ -568,17 +593,20 @@
     },
     "/user/telegram/connect-token": {
       "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Create connect-token",
+        "tags": ["Users"],
+        "summary": "Connect telegram account",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "type": "object",
+                  "properties": {
+                    "deepLink": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -633,188 +661,20 @@
     },
     "/user/telegram/disconnect": {
       "delete": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Delete disconnect",
+        "tags": ["Users"],
+        "summary": "Disconnect telegram account",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/user/google/connect-url": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List connect-url",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
                   }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/user/google/callback": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "List callback",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ]
-      }
-    },
-    "/user/google/disconnect": {
-      "delete": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Delete disconnect",
-        "responses": {
-          "200": {
-            "description": "Successful response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
                 }
               }
             }
@@ -859,17 +719,20 @@
     },
     "/user/push-notifications/register": {
       "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Create register",
+        "tags": ["Users"],
+        "summary": "Register push notifications",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/User"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    }
+                  }
                 }
               }
             }
@@ -915,7 +778,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -924,10 +792,8 @@
     },
     "/user/change-password": {
       "post": {
-        "tags": [
-          "Users"
-        ],
-        "summary": "Create change-password",
+        "tags": ["Users"],
+        "summary": "Change password",
         "responses": {
           "200": {
             "description": "Successful response",
@@ -980,7 +846,21 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 6,
+                    "description": "Current password of the user",
+                    "writeOnly": true
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "New password, must be at least 8 characters",
+                    "writeOnly": true
+                  }
+                }
               }
             }
           }
@@ -989,9 +869,7 @@
     },
     "/beehive/list": {
       "get": {
-        "tags": [
-          "Beehives"
-        ],
+        "tags": ["Beehives"],
         "summary": "List list",
         "responses": {
           "200": {
@@ -999,9 +877,12 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Beehive"
+                  "type": "object",
+                  "properties": {
+                    "beehives": {
+                      "type": "array",
+                      "$ref": "#/components/schemas/Beehive"
+                    }
                   }
                 }
               }
@@ -1047,17 +928,16 @@
     },
     "/": {
       "get": {
-        "tags": [
-          "General"
-        ],
-        "summary": "List ",
+        "tags": ["General"],
+        "summary": "Healthcheck",
         "responses": {
           "200": {
             "description": "Successful response",
             "content": {
-              "application/json": {
+              "application/text": {
                 "schema": {
-                  "type": "object"
+                  "type": "string",
+                  "example": "API is up!"
                 }
               }
             }
@@ -1091,25 +971,66 @@
       "User": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
+          "id": { "type": "string", "readOnly": true },
+          "username": { "type": "string" },
+          "fullName": { "type": "string" },
+          "email": { "type": "string", "format": "email", "nullable": true },
+          "phone": { "type": "string", "nullable": true },
+
+          "credentials": {
+            "type": "object",
+            "properties": {
+              "telegram": {
+                "type": "object",
+                "properties": {
+                  "telegramChatId": { "type": "integer", "nullable": true },
+                  "telegramToken": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              },
+              "google": {
+                "type": "object",
+                "properties": {
+                  "googleAccessToken": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "googleRefreshToken": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "googleTokenExpiry": { "type": "string", "nullable": true },
+                  "googleOAuthState": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              },
+              "expoPushTokens": {
+                "type": "array",
+                "items": { "type": "string" },
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
-          "email": {
-            "type": "string",
-            "format": "email"
-          },
-          "name": {
-            "type": "string"
-          },
+
           "createdAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "readOnly": true
           },
           "updatedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "readOnly": true
           }
-        }
+        },
+        "required": ["username"]
       },
       "Beehive": {
         "type": "object",
@@ -1120,10 +1041,7 @@
           "name": {
             "type": "string"
           },
-          "location": {
-            "type": "string"
-          },
-          "userId": {
+          "owner": {
             "type": "string"
           },
           "createdAt": {
@@ -1139,14 +1057,17 @@
       "WeightReading": {
         "type": "object",
         "properties": {
-          "id": {
+          "value": {
             "type": "string"
           },
-          "beehiveId": {
+          "beehive": {
             "type": "string"
           },
-          "weight": {
+          "lastNotifiedWeight": {
             "type": "number"
+          },
+          "user": {
+            "type": "string"
           },
           "timestamp": {
             "type": "string",
@@ -1160,14 +1081,14 @@
           "id": {
             "type": "string"
           },
-          "beehiveId": {
+          "beehive": {
             "type": "string"
           },
-          "temperature": {
+          "value": {
             "type": "number"
           },
-          "humidity": {
-            "type": "number"
+          "user": {
+            "type": "string"
           },
           "timestamp": {
             "type": "string",
